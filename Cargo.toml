@@ -1,0 +1,6 @@
+[package]
+name = "rust-sandbox"
+version = "0.1.0"
+authors = ["Isaac Schaaf <ischaaf@riotgames.com>"]
+
+[dependencies]

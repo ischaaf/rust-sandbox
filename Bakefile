@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+bake_require bake_tasks.sh
+
+bake_task build "build the program"
+bake_task run "run the program"
