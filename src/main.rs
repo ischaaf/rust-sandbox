@@ -1,33 +1,62 @@
+extern crate clap;
+extern crate serde_json;
 
-use std::str;
-use std::env;
-use std::cmp::min;
+#[macro_use]
+extern crate serde_derive;
+
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::prelude::*;
-use std::io::SeekFrom;
+use clap::{Arg, App, SubCommand, ArgMatches};
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    let fname = &args[1];
-    reverse_lines(fname);
+
+#[derive(Serialize, Deserialize)]
+struct JobRunnerEnv {
+    host: String,
+    user: String,
+    root: String,
 }
 
-fn reverse_lines(fname: &String) {
-    let mut f = File::open(fname).expect("file not found");
-    let mut buf = [0; 10];
-    let mut offset = f.seek(SeekFrom::End(-10)).expect("failed to seek in file");
-    let mut read_len: i64 = 0;
-    f.read(&mut buf).expect("error reading file");
-    while read_len > 0 || offset > 0 {
-        {
-            let s = str::from_utf8(&buf[0..(read_len as usize)]).expect("invalid unicode sequence");
-            let chunk = String::from(s);
-            print!("{}", s);
-        }
-        //println!("read_len:{},offset:{}", read_len, offset);
-        read_len = min(10, offset) as i64;
-        let seek_dist = read_len + 10;
-        offset = f.seek(SeekFrom::Current(0 - seek_dist)).expect("failed to seek in file");
-        f.read(&mut buf).expect("error reading file");
+#[derive(Serialize, Deserialize)]
+struct JobRunnerStatic {
+    environments: HashMap<String, JobRunnerEnv>,
+}
+
+
+fn read_static() -> JobRunnerStatic {
+    let err_msg = "could_not_read_static_data";
+    let file = File::open("static/jobrunner.json").expect(err_msg);
+    let val: JobRunnerStatic = serde_json::from_reader(file).expect(err_msg);
+    val
+}
+
+fn cmd_list_envs(_: &ArgMatches, static_data: JobRunnerStatic) {
+    println!("Available environments are:");
+    for (env, data) in &static_data.environments {
+        println!("{} {}@{}:{}", env, data.user, data.host, data.root);
+    }
+}
+
+fn main() {
+    let matches = App::new("Job Runner CLI")
+        .version("0.0.1")
+        .author("Isaac Schaaf")
+        .about("CLI tool for interacting with the JobRunner")
+        .arg(Arg::with_name("env")
+             .short("e")
+             .long("environment")
+             .value_name("ENV")
+             .help("Sets the JobRunner environment")
+             .takes_value(true))
+        .subcommand(SubCommand::with_name("envs")
+                    .about("List the available environments")
+                    .version("0.0.1")
+                    .author("Isaac Schaaf"))
+        .get_matches();
+    let static_data = read_static();
+    let env = matches.value_of("env").unwrap_or("local");
+    println!("Environment set to: {}", env);
+    if let Some(matches) = matches.subcommand_matches("envs") {
+        cmd_list_envs(matches, static_data);
+        return ();
     }
 }

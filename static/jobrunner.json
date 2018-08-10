@@ -1,0 +1,14 @@
+{
+  "environments": {
+    "staging": {
+      "host": "0.0.0.0",
+      "user": "staging-user",
+      "root": "/tmp/jobrunner/staging"
+    },
+    "prod": {
+      "host": "0.0.0.1",
+      "user": "prod-user",
+      "root": "/tmp/jobrunner/prod"
+    }
+  }
+}

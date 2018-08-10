@@ -7,3 +7,7 @@ function build () {
 function run () {
   cargo run "$@"
 }
+
+function run.directly () {
+  ./target/debug/rust-sandbox "$@"
+}
